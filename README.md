@@ -28,7 +28,6 @@ Mini-Project/
 │   └── streamlit_app.py           ← Interactive web UI for colorizing videos
 ├── data/
 │   ├── download_coco_subset.py    ← Download COCO training images
-│   ├── download_telugu_dataset.py ← Setup for Telugu cinema frames
 │   └── optimize_dataset.py        ← Pre-resize images to 128px for fast loading
 ├── inference/
 │   └── video_pipeline.py          ← Frame extraction, colorization, audio merge
@@ -78,24 +77,18 @@ pip install -r requirements.txt
 
 ## 📦 Dataset Preparation
 
-### Option A — COCO Subset (Recommended, ~100k images)
-```bash
-python data/download_coco_subset.py
-```
-Then optimize (pre-resize to 128px for 3× faster training):
-```bash
-python utils/optimize_dataset.py
-```
+To download and prepare the COCO training images (~100k images):
 
-### Option B — Telugu Cinema Restoration
-To build a dataset specifically for Telugu movies, run:
-```bash
-python data/download_telugu_dataset.py
-```
-This script creates the necessary folder structure. You can then place your color training images in `data/telugu_dataset/train` and train the model using:
-```bash
-python training/train.py --data data/telugu_dataset/train --save_dir outputs/telugu_weights
-```
+1. **Download Subset**:
+   ```bash
+   python data/download_coco_subset.py
+   ```
+
+2. **Optimize**:
+   Pre-resize images to 128px for 3× faster loading during training:
+   ```bash
+   python utils/optimize_dataset.py
+   ```
 
 ---
 
