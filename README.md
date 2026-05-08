@@ -25,31 +25,29 @@ Built with PyTorch, an Attention U-Net generator, a PatchGAN discriminator, and 
 ```
 Mini-Project/
 ├── app/
-│   └── streamlit_app.py        ← Interactive web UI for colorizing videos
+│   └── streamlit_app.py           ← Interactive web UI for colorizing videos
 ├── data/
-│   ├── download_coco_subset.py ← Download COCO training images
-│   └── optimize_dataset.py     ← Pre-resize images to 128px for fast loading
+│   ├── download_coco_subset.py    ← Download COCO training images
+│   ├── download_telugu_dataset.py ← Setup for Telugu cinema frames
+│   └── optimize_dataset.py        ← Pre-resize images to 128px for fast loading
 ├── inference/
-│   └── video_pipeline.py       ← Frame extraction, colorization, audio merge
+│   └── video_pipeline.py          ← Frame extraction, colorization, audio merge
 ├── models/
-│   ├── unet.py                 ← Attention U-Net generator
-│   └── discriminator.py        ← PatchGAN discriminator
+│   ├── unet.py                    ← Attention U-Net generator
+│   └── discriminator.py           ← PatchGAN discriminator
 ├── training/
-│   ├── train.py                ← Main GAN training loop (logs metrics to JSON)
-│   ├── loss.py                 ← ColorizationLoss (L1 + VGG) + GANLoss
-│   └── plot_metrics.py         ← Developer tool: visualise training graphs
+│   ├── train.py                   ← Main GAN training loop (logs metrics to JSON)
+│   ├── loss.py                    ← ColorizationLoss (L1 + VGG) + GANLoss
+│   └── plot_metrics.py            ← Developer tool: visualise training graphs
 ├── utils/
-│   ├── color.py                ← LAB ↔ RGB tensor conversions
-│   ├── preprocessing.py        ← ColorizationDataset + augmentations
-│   └── optimize_dataset.py     ← Dataset optimization utilities
-├── Telugu_Branch/
-│   └── data/
-│       └── download_telugu_dataset.py ← Telugu cinema frame extractor
+│   ├── color.py                   ← LAB ↔ RGB tensor conversions
+│   ├── preprocessing.py           ← ColorizationDataset + augmentations
+│   └── optimize_dataset.py        ← Dataset optimization utilities
 ├── outputs/
-│   ├── weights/                ← Saved model checkpoints (.pth)
-│   └── metrics.json            ← Auto-generated training metrics log
+│   ├── weights/                   ← Saved model checkpoints (.pth)
+│   └── metrics.json               ← Auto-generated training metrics log
 ├── requirements.txt
-└── commands.txt                ← Quick-reference commands
+└── commands.txt                   ← Quick-reference commands
 ```
 
 ---
@@ -89,10 +87,14 @@ Then optimize (pre-resize to 128px for 3× faster training):
 python utils/optimize_dataset.py
 ```
 
-### Option B — Telugu Cinema Frames
-Extract frames from your own Telugu movie files:
+### Option B — Telugu Cinema Restoration
+To build a dataset specifically for Telugu movies, run:
 ```bash
-python Telugu_Branch/data/download_telugu_dataset.py
+python data/download_telugu_dataset.py
+```
+This script creates the necessary folder structure. You can then place your color training images in `data/telugu_dataset/train` and train the model using:
+```bash
+python training/train.py --data data/telugu_dataset/train --save_dir outputs/telugu_weights
 ```
 
 ---
