@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 import cv2
-from skimage.color import rgb2lab, lab2rgb
 
 def lab_to_rgb_tensor(L, ab):
     """
@@ -32,18 +31,6 @@ def lab_to_rgb_tensor(L, ab):
     
     rgb = torch.cat([r, g, b], dim=1)
     return torch.clamp(rgb, 0, 1)
-
-def lab_to_rgb_numpy(L, ab):
-    """
-    Convert L and ab tensors back to an RGB uint8 image using skimage.
-    L: (1, H, W) in [-1, 1], ab: (2, H, W) in [-1, 1]
-    """
-    L_val = (L + 1.) * 50.
-    ab_val = ab * 110.
-    lab = np.concatenate([L_val, ab_val], axis=0) # (3, H, W)
-    lab = lab.transpose((1, 2, 0)) # (H, W, 3)
-    rgb = lab2rgb(lab.astype(np.float64))
-    return (rgb * 255).astype(np.uint8)
 
 def lab_to_bgr_cv2(L_highres, ab_preds, sat_factor=1.0, tint_shift=0):
     """

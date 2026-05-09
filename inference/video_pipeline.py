@@ -3,9 +3,9 @@ import sys
 import cv2
 import torch
 import numpy as np
-from tqdm import tqdm
+from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from models.unet import UNet
 from utils.color import lab_to_bgr_cv2

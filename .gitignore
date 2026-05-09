@@ -26,6 +26,7 @@ data/*/
 outputs/weights/*.pth
 outputs/*.mp4
 outputs/*.png
+outputs/*.json
 Test_videos/
 
 # Environments

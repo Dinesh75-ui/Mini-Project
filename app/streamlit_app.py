@@ -1,11 +1,10 @@
-import os
 import sys
 import streamlit as st
 import tempfile
 from pathlib import Path
 
 # Add parent directory to path so we can import from inference
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from inference.video_pipeline import VideoColorizer
 
@@ -17,27 +16,13 @@ st.markdown("Upload a black-and-white video, and the model will add color using 
 # --- Model Loading Logic ---
 # Dynamically find the best weights in the folder
 weights_dir = Path("outputs/weights")
-default_weights = ""
+fallback_weights = [
+    weights_dir / "best_model.pth",
+    weights_dir / "interrupted.pth",
+]
 
-if weights_dir.exists():
-    # Find all .pth files
-    all_weights = list(weights_dir.glob("*.pth"))
-    if all_weights:
-        # Sort by modification time (most recent first)
-        all_weights.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-        default_weights = str(all_weights[0])
-
-# Fallback check for common names if glob fails or is empty
-if not default_weights:
-    fallback_paths = [
-        "outputs/weights/gan_colorization_epoch_10.pth",
-        "outputs/weights/unet_colorization_interrupted.pth",
-        "outputs/weights/unet_colorization_best.pth"
-    ]
-    for p in fallback_paths:
-        if os.path.exists(p):
-            default_weights = p
-            break
+available_weights = sorted(weights_dir.glob("*.pth"), key=lambda path: path.stat().st_mtime, reverse=True) if weights_dir.exists() else []
+default_weights = next((str(path) for path in available_weights + fallback_weights if path.exists()), "")
 
 st.sidebar.title("Settings")
 weights_path = st.sidebar.text_input("Model Weights Path", default_weights)
@@ -51,14 +36,14 @@ tint_shift = st.sidebar.slider("Tint (Red ↔ Green)", -50, 50, 0, 1)
 if 'colorizer' not in st.session_state or st.session_state.get('loaded_weights') != weights_path:
     with st.spinner("Initializing Attention UNet Model..."):
         try:
-            if os.path.exists(weights_path):
+            if weights_path and Path(weights_path).is_file():
                 st.session_state.colorizer = VideoColorizer(model_path=weights_path)
                 st.session_state.loaded_weights = weights_path
-                st.sidebar.success(f"Loaded: {os.path.basename(weights_path)}")
+                st.sidebar.success(f"Loaded: {Path(weights_path).name}")
             else:
                 st.sidebar.warning("No weights found at this path.")
                 st.session_state.colorizer = VideoColorizer()
-        except RuntimeError as e:
+        except RuntimeError:
             st.error("⚠️ Model Architecture Mismatch!")
             st.info("The weights you are trying to load don't match the new Attention UNet architecture. Please use weights generated from your most recent training run (e.g., 'unet_colorization_interrupted.pth').")
             st.stop()
@@ -93,8 +78,9 @@ if uploaded_file is not None:
         
     if start_btn:
         # Create a unique temporary file for this specific run
-        output_path = f"outputs/colorized_{tempfile.gettempprefix()}.mp4"
-        os.makedirs("outputs", exist_ok=True)
+        output_dir = Path("outputs")
+        output_dir.mkdir(exist_ok=True)
+        output_path = str(output_dir / f"colorized_{tempfile.gettempprefix()}.mp4")
         
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -122,7 +108,7 @@ if uploaded_file is not None:
         
         preview_placeholder.empty() # Clean up preview after done
             
-        if success and os.path.exists(output_path):
+        if success and Path(output_path).exists():
             status_text.empty()
             progress_bar.empty()
             st.success("✨ Colorization Complete!")
@@ -146,8 +132,8 @@ if uploaded_file is not None:
             
             # Optional: Clean up input temp file
             try:
-                os.unlink(tfile.name)
-            except:
+                Path(tfile.name).unlink()
+            except OSError:
                 pass
         else:
             st.error("Failed to process the video. Check if the input file is valid.")

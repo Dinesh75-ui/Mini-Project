@@ -1,6 +1,5 @@
 import os
 import random
-import shutil
 from PIL import Image
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count

@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.unet import UNet
 from models.discriminator import Discriminator
-from utils.preprocessing import ColorizationDataset, get_image_paths
+from utils.preprocessing import ColorizationDataset
 from utils.color import lab_to_rgb_tensor
 from training.loss import ColorizationLoss, GANLoss
 

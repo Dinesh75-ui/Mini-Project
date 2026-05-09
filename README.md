@@ -1,197 +1,126 @@
-# 🎨 Deep Learning-Based Video Colorization System
+# Deep Learning-Based Video Colorization System
 
-A GAN-powered system that automatically restores realistic color to black-and-white videos, with a focus on **Telugu cinema restoration**.  
-Built with PyTorch, an Attention U-Net generator, a PatchGAN discriminator, and a Streamlit web interface.
+A PyTorch project for restoring color to black-and-white videos. It uses an Attention U-Net generator, a PatchGAN discriminator for training, and a Streamlit interface for video inference.
 
----
-
-## ✨ Key Features
+## Features
 
 | Feature | Details |
 |---|---|
-| **GAN Architecture** | Attention U-Net generator + PatchGAN discriminator |
-| **LAB Color Space** | Model predicts `ab` channels from `L` (lightness) — preserves original brightness |
-| **Perceptual Loss** | VGG-based perceptual loss + L1 + adversarial loss for vivid, sharp colors |
-| **AMP Training** | Automatic Mixed Precision (FP16) for fast GPU training |
-| **Train/Val Split** | Automatic 90/10 split with augmentations disabled on validation |
-| **Metric Logging** | Per-epoch JSON log → beautiful matplotlib dashboard |
-| **Streamlit UI** | Real-time colorization with live frame preview and download |
-| **Video Pipeline** | Frame-by-frame inference with automatic audio re-merging |
+| GAN training | Attention U-Net generator with PatchGAN discriminator |
+| LAB color space | Predicts `ab` channels from the grayscale `L` channel |
+| Perceptual loss | Combines Smooth L1, VGG perceptual loss, and adversarial loss |
+| AMP training | Uses mixed precision automatically when CUDA is available |
+| Streamlit UI | Upload a video, preview progress, and download the result |
+| Video pipeline | Frame-by-frame inference with optional audio re-merge |
 
----
+## Project Structure
 
-## 🗂️ Project Structure
-
-```
+```text
 Mini-Project/
 ├── app/
-│   └── streamlit_app.py           ← Interactive web UI for colorizing videos
+│   └── streamlit_app.py
 ├── data/
-│   ├── download_coco_subset.py    ← Download COCO training images
-│   └── optimize_dataset.py        ← Pre-resize images to 128px for fast loading
+│   └── download_coco_subset.py
 ├── inference/
-│   └── video_pipeline.py          ← Frame extraction, colorization, audio merge
+│   └── video_pipeline.py
 ├── models/
-│   ├── unet.py                    ← Attention U-Net generator
-│   └── discriminator.py           ← PatchGAN discriminator
+│   ├── discriminator.py
+│   └── unet.py
 ├── training/
-│   ├── train.py                   ← Main GAN training loop (logs metrics to JSON)
-│   ├── loss.py                    ← ColorizationLoss (L1 + VGG) + GANLoss
-│   └── plot_metrics.py            ← Developer tool: visualise training graphs
+│   ├── loss.py
+│   ├── plot_metrics.py
+│   └── train.py
 ├── utils/
-│   ├── color.py                   ← LAB ↔ RGB tensor conversions
-│   ├── preprocessing.py           ← ColorizationDataset + augmentations
-│   └── optimize_dataset.py        ← Dataset optimization utilities
-├── outputs/
-│   ├── weights/                   ← Saved model checkpoints (.pth)
-│   └── metrics.json               ← Auto-generated training metrics log
-├── requirements.txt
-└── commands.txt                   ← Quick-reference commands
+│   ├── color.py
+│   ├── optimize_dataset.py
+│   └── preprocessing.py
+├── .gitignore
+├── README.md
+└── requirements.txt
 ```
 
----
+Generated datasets, checkpoints, videos, metrics, and plots are ignored by Git so the repository stays lightweight.
 
-## ⚙️ Setup & Installation
+## Setup
 
-### 1. Clone the Repository
 ```bash
 git clone https://github.com/Dinesh75-ui/Mini-Project.git
 cd Mini-Project
-```
-
-### 2. Install PyTorch (GPU recommended)
-```bash
-# For CUDA 12.4 (NVIDIA GPU)
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-
-# For CPU only
-pip install torch torchvision
-```
-
-### 3. Install Remaining Dependencies
-```bash
 pip install -r requirements.txt
 ```
 
----
+For NVIDIA GPUs, install the PyTorch build that matches your CUDA version before installing the remaining requirements. For example:
 
-## 📦 Dataset Preparation
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+```
 
-To download and prepare the COCO training images (~100k images):
+## Dataset Preparation
 
-1. **Download Subset**:
-   ```bash
-   python data/download_coco_subset.py
-   ```
+Download a COCO image subset:
 
-2. **Optimize**:
-   Pre-resize images to 128px for 3× faster loading during training:
-   ```bash
-   python utils/optimize_dataset.py
-   ```
+```bash
+python data/download_coco_subset.py
+```
 
----
+Pre-resize images for faster training:
 
-## 🚀 Training the Model
+```bash
+python utils/optimize_dataset.py --src data/coco_subset --dst data/coco_128_subset --coco
+```
 
-### Train from Scratch
+## Training
+
+Train from scratch:
+
 ```bash
 python training/train.py --epochs 20 --batch 16
 ```
 
-### Resume from a Checkpoint
+Resume from a checkpoint:
+
 ```bash
 python training/train.py --resume outputs/weights/color_model_epoch_45.pth --epochs 60
 ```
 
-### Train on a Custom Dataset
-```bash
-python training/train.py --data path/to/your/images --epochs 30 --batch 8
-```
-
-**Training automatically:**
-- Splits data 90% train / 10% validation
-- Runs a validation loop every epoch and logs Val L1 Loss
-- Saves `best_model.pth` whenever validation loss improves
-- Saves a full checkpoint every 5 epochs
-- Writes all metrics to `outputs/metrics.json`
-
----
-
-## 📊 Visualising Training Metrics
-
-After (or during) training, generate a full metrics dashboard:
+Train on a custom dataset:
 
 ```bash
-python training/plot_metrics.py
+python training/train.py --data path/to/images --epochs 30 --batch 8
 ```
 
-This opens an interactive window with **6 graphs**:
+Checkpoints are written to `outputs/weights/`.
 
-| Graph | What it shows |
-|---|---|
-| Generator & Discriminator Loss | Per-epoch average train loss for G and D |
-| Validation L1 Loss | How well the model generalises; marks the best epoch |
-| Generator Loss Components | L1 (pixel) vs Perceptual (VGG) breakdown |
-| Overfitting Monitor | Train G vs Val L1 with gap curve |
-| Learning Rate Schedule | Cosine annealing curve for G and D |
-| Epoch Duration | Time per epoch in seconds |
-
-### Save as PNG instead of opening a window
-```bash
-python training/plot_metrics.py --save
-# → outputs/training_metrics.png
-```
-
-### Use a custom metrics file
-```bash
-python training/plot_metrics.py --metrics path/to/metrics.json
-```
-
----
-
-## 🖥️ Running the Web Application
+## Web App
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
-Then open `http://localhost:8501` in your browser.
+Open `http://localhost:8501`, upload a grayscale video, choose the output resolution, adjust color controls if needed, and download the colorized result.
 
-**What you can do:**
-1. Upload any B&W video (MP4 / AVI / MOV)
-2. Pick output resolution (480p recommended for speed, 720p, or original)
-3. Adjust **Saturation** and **Tint** in the sidebar for fine-tuning
-4. Watch frame-by-frame live preview during colorization
-5. Download the finished colorized video
+## Command-Line Inference
 
----
-
-## 🎬 Command-Line Inference
-
-Colorize a single video without the UI:
 ```bash
 python inference/video_pipeline.py \
-  --input  "path/to/bw_video.mp4" \
-  --output "outputs/colorized.mp4" \
-  --weights "outputs/weights/best_model.pth"
+  --input path/to/bw_video.mp4 \
+  --output outputs/colorized.mp4 \
+  --weights outputs/weights/best_model.pth
 ```
 
----
+## Training Metrics
 
-## 🔧 Performance Tips
+If `outputs/metrics.json` exists, create a metrics dashboard with:
 
-- **GPU check**: The console should print `Using device: cuda | AMP: ON` at the start of training. If it shows `cpu`, verify your PyTorch CUDA installation.
-- **Batch size**: Use `--batch 16` for 6 GB VRAM, `--batch 32` for 8–12 GB VRAM.
-- **Gradient accumulation**: Already built-in via AMP; reduces memory pressure automatically.
-- **Resume training**: Always use `--resume` to continue from the last checkpoint and avoid restarting from scratch.
-- **Best model**: Use `outputs/weights/best_model.pth` for inference — this is the checkpoint with the lowest validation L1 loss.
-
----
-
-## 📋 Requirements
-
+```bash
+python training/plot_metrics.py --save
 ```
+
+The saved plot is written to `outputs/training_metrics.png`.
+
+## Requirements
+
+```text
 torch>=2.0.0
 torchvision>=0.15.0
 opencv-python>=4.8.0
@@ -203,8 +132,6 @@ matplotlib>=3.7.0
 moviepy>=1.0.3
 ```
 
----
-
-## 📄 License
+## License
 
 This project is for academic and research purposes.
