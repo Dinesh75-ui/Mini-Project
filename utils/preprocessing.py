@@ -46,7 +46,7 @@ def pil_to_lab_tensors(pil_img, transform=None):
 class ColorizationDataset(Dataset):
     """
     A universal dataset class for all colorization tasks.
-    Supports Tiny ImageNet, COCO, and Custom folders.
+    Supports COCO subsets and custom image folders.
     """
     def __init__(self, root_dir=None, paths=None, split='train', size=128, is_optimized=False):
         self.split = split
@@ -56,16 +56,9 @@ class ColorizationDataset(Dataset):
         if paths:
             self.paths = paths
         elif root_dir:
-            if os.path.isdir(os.path.join(root_dir, "train")): # Tiny ImageNet structure
-                self.paths = []
-                train_path = os.path.join(root_dir, "train")
-                for cls in os.listdir(train_path):
-                    img_dir = os.path.join(train_path, cls, "images")
-                    if os.path.isdir(img_dir):
-                        self.paths += [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
-            else: # Flat folder (COCO or Optimized)
-                self.paths = [os.path.join(root_dir, f) for f in os.listdir(root_dir) 
-                             if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+            self.paths = get_image_paths(root_dir)
+        else:
+            self.paths = []
         
         self.transform = build_transform(split, size, is_optimized)
 

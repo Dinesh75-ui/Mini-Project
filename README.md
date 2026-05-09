@@ -66,7 +66,7 @@ python data/download_coco_subset.py
 Pre-resize images for faster training:
 
 ```bash
-python utils/optimize_dataset.py --src data/coco_subset --dst data/coco_128_subset --coco
+python utils/optimize_dataset.py --src data/coco_subset --dst data/coco_128_subset
 ```
 
 ## Training

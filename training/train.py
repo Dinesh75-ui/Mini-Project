@@ -53,19 +53,17 @@ def train(dataset_path=None, epochs=20, batch_size=16, lr=2e-4, save_dir="output
             optimizer_D.load_state_dict(ckpt['optimizer_D_state_dict'])
         start_epoch = ckpt['epoch'] + 1
 
-    # ── Dataset Auto-Detection & Split ────────────────────────────────────
     print("\nLoading dataset...")
     coco_opt = os.path.join("data", "coco_128_subset")
-    tiny_opt = os.path.join("data", "tiny_imagenet_128_subset")
     
     if dataset_path:
         full_dataset = ColorizationDataset(root_dir=dataset_path, is_optimized="subset" in dataset_path, size=image_size)
     elif os.path.isdir(coco_opt):
         full_dataset = ColorizationDataset(root_dir=coco_opt, is_optimized=True, size=image_size)
-    elif os.path.isdir(tiny_opt):
-        full_dataset = ColorizationDataset(root_dir=tiny_opt, is_optimized=True, size=image_size)
     else:
-        full_dataset = ColorizationDataset(root_dir=os.path.join("data", "tiny-imagenet-200"), size=image_size)
+        raise FileNotFoundError(
+            "No training data found. Pass --data path/to/images or prepare data/coco_128_subset."
+        )
 
     # 90/10 Train/Val split
     train_size = int(0.9 * len(full_dataset))
